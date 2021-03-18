@@ -1,0 +1,104 @@
+---
+title: "Draft report"
+output: github_document
+---
+
+<!--This Markdown file is generated from the R Markdown file of the same name. Please edit the R Markdown version. -->
+
+```{r setup, include=FALSE}
+# for github api
+library(gh)
+# for google analytics api
+library(googleAnalyticsR)
+library(googleAuthR)
+# for markdown
+library(knitr)
+library(kableExtra)
+# for plotting
+library(ggplot2)
+# for data wrangling
+library(lubridate)
+library(tidyverse)
+# for coop metrics functions
+library(coopMetrics)
+
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(fig.path='figures/')
+```
+
+
+## Report data
+
+```{r variables, include=FALSE}
+# cache is set to store the last year of data - must update cache if you need to go further back than a year.
+begin <- as_date("2020-01-01")
+end <- as_date("2020-12-31")
+dateRange <- c(begin, end)
+```
+
+This report features data from `{r} begin` to `{r} end`.
+
+```{r}
+# pull ga data
+pullGoogleAnalytics("Coop", dateRange, "coophelp@fredhutch.org")
+```
+
+
+
+## Load data
+```{r data}
+load("R/sysdata.rda")
+message(paste0("Data loaded was last updated on ", cacheDate))
+message(paste0("Today is ", Sys.Date()))
+```
+
+# Plot posts over time
+```{r posts-total-plot}
+ggplot(blogMetrics, aes(x = month, y = gh_numPostTotal)) +
+  geom_line() +
+  labs(title = "total posts by month", x = "month", y = "total number of posts") +
+  theme_minimal()
+```
+
+```{r posts-monthly-plot}
+ggplot(blogMetrics, aes(x = month, y = gh_numNewPosts)) +
+  geom_bar(stat = "identity") +
+  labs(title = "number of posts per month", x = "month", y = "number of posts") +
+  theme_minimal()
+```
+
+```{r posts-overlay}
+ggplot(blogMetrics, aes(x = month)) +
+  geom_bar(aes(y = gh_numNewPosts), stat = "identity") +
+  geom_line(aes(y = gh_numPostTotal)) +
+  labs(title = "number of posts per month with running total", x = "month", y = "number of posts") +
+  theme_minimal()
+```
+
+# Plot commits over time
+```{r commits-monthly-plot}
+ggplot(blogMetrics, aes(x = month, y = gh_numCommits)) +
+  geom_bar(stat = "identity") +
+  labs(title = "number of commits per month", x = "month", y = "number of commits") +
+  theme_minimal()
+```
+
+# Plot google analytics metrics
+```{r plot-ga}
+blogMetrics %>%
+  select(month, ga_users, ga_newUsers) %>%
+  ggplot(aes(x = month)) +
+  geom_line(aes(y = ga_users, color = "users")) +
+  geom_line(aes(y = ga_newUsers, color = "newUsers")) +
+  labs(x = "month", y = "number of users") +
+  theme_minimal()
+```
+
+```{r}
+blogMetrics %>%
+  ggplot(aes(x = month)) +
+  geom_line(aes(y = ga_pageviews, color = "page views")) +
+  geom_line(aes(y = ga_sessions, color = "sessions")) +
+  labs(x = "month", y = "count") +
+  theme_minimal()
+```
